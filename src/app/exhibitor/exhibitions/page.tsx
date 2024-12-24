@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
+import { Exhibition } from "@/types/types"; // 型定義をインポート
 
-// ログイン後のTOP画面
 export default function LoggedInTopPage() {
     const [filters, setFilters] = useState({
         keyword: "",
@@ -12,13 +13,64 @@ export default function LoggedInTopPage() {
         organizer: "",
     });
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const [exhibitions, setExhibitions] = useState<Exhibition[]>([]);
+    const [categories, setCategories] = useState<string[]>([]);
+    const [periods, setPeriods] = useState<string[]>([]);
+    const [organizers, setOrganizers] = useState<string[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [initialized, setInitialized] = useState(false); // 初回データ取得済みフラグ
+
+    const handleInputChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    ) => {
         const { name, value } = e.target;
         setFilters((prev) => ({
             ...prev,
             [name]: value,
         }));
     };
+
+    const fetchExhibitions = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get("http://localhost:3100/api/exhibitor/exhibitions", {
+                params: filters,
+            });
+            const data = response.data as Exhibition[];
+
+            setExhibitions(data);
+
+            if (!initialized) {
+                // 初回データ取得時に選択肢を設定
+                const periodsSet = new Set<string>(
+                    data.map((exhibition) => exhibition.start_date.slice(0, 7))
+                );
+                setPeriods(Array.from(periodsSet).sort());
+
+                const categoriesSet = new Set<string>(
+                    data.flatMap((exhibition) =>
+                        exhibition.categories.map((category) => category.name)
+                    )
+                );
+                setCategories(Array.from(categoriesSet));
+
+                const organizersSet = new Set<string>(
+                    data.map((exhibition) => exhibition.organizer.company_name)
+                );
+                setOrganizers(Array.from(organizersSet));
+
+                setInitialized(true); // 初期化済みとしてフラグをセット
+            }
+        } catch (error) {
+            console.error("展示会データの取得に失敗しました。", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchExhibitions();
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-100">
@@ -34,7 +86,6 @@ export default function LoggedInTopPage() {
                 </div>
             </header>
 
-            {/* 見出し */}
             <div className="bg-gray-200 py-4">
                 <div className="container mx-auto text-center">
                     <h2 className="text-3xl font-bold text-gray-800">
@@ -45,8 +96,7 @@ export default function LoggedInTopPage() {
             </div>
 
             <main className="container mx-auto flex mt-4 px-4">
-                {/* 左側の検索条件エリア */}
-                <aside className="w-1/4 bg-white shadow-md rounded-md p-4">
+                <aside className="w-1/4 bg-white shadow-md rounded-md p-4 self-start">
                     <h3 className="text-xl font-bold text-gray-800 mb-4">
                         検索条件
                     </h3>
@@ -58,7 +108,7 @@ export default function LoggedInTopPage() {
                             value={filters.keyword}
                             onChange={handleInputChange}
                             placeholder="例) AI、IoT"
-                            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                     <div className="mb-4">
@@ -70,8 +120,11 @@ export default function LoggedInTopPage() {
                             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         >
                             <option value="">選択してください</option>
-                            <option value="2024-11">2024年11月</option>
-                            <option value="2024-12">2024年12月</option>
+                            {periods.map((period) => (
+                                <option key={period} value={period}>
+                                    {period}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div className="mb-4">
@@ -83,8 +136,11 @@ export default function LoggedInTopPage() {
                             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         >
                             <option value="">選択してください</option>
-                            <option value="ai">AI・人工知能</option>
-                            <option value="iot">IoT</option>
+                            {categories.map((category) => (
+                                <option key={category} value={category}>
+                                    {category}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <div className="mb-4">
@@ -96,47 +152,62 @@ export default function LoggedInTopPage() {
                             className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         >
                             <option value="">選択してください</option>
-                            <option value="expo_inc">EXPO Inc.</option>
-                            <option value="future_tech">Future Tech</option>
+                            {organizers.map((organizer) => (
+                                <option key={organizer} value={organizer}>
+                                    {organizer}
+                                </option>
+                            ))}
                         </select>
                     </div>
+                    <button
+                        onClick={fetchExhibitions}
+                        className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 mt-4"
+                    >
+                        検索
+                    </button>
                 </aside>
 
-                {/* 右側の展示会カードエリア */}
-                <section className="w-3/4 ml-8">
-                    <div className="space-y-4">
-                        {/* カード例 */}
-                        <div className="bg-white shadow-md rounded-md p-4 flex flex-col space-y-4">
-                            <div className="flex items-center space-x-4">
-                                <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-md">
-                                    <span className="text-gray-600">📷</span>
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-800">
-                                        AI・人工知能EXPO【秋】
-                                    </h3>
-                                    <p className="text-gray-600 text-sm">
-                                        2024/11/20 - 2024/11/22
-                                    </p>
-                                    <p className="text-gray-600 text-sm">東京都</p>
-                                </div>
-                            </div>
-                            <p className="text-gray-600 text-sm line-clamp-3">
-                                近年、小売流通・エネルギー・ヘルスケアなどあらゆる業界でその活用方法に注目が集まるブロックチェーン。本展は、
-                                ブロックチェーンに関する最新の研究からアプリケーションまで一堂に集まる専門見本市です。
-                            </p>
-                            <div className="text-right">
-                                <Link
-                                    href="/exhibitor/exhibitions/1" // IDを動的に変更する場合は1を動的値に
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 inline-block"
+                <section className="w-3/4 ml-8 mb-6">
+                    {loading ? (
+                        <p>読み込み中...</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {exhibitions.map((exhibition) => (
+                                <div
+                                    key={exhibition.id}
+                                    className="bg-white shadow-md rounded-md p-4 flex flex-col space-y-4"
                                 >
-                                    詳細を見る
-                                </Link>
-                            </div>
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-md">
+                                            <span className="text-gray-600">📷</span>
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-gray-800">
+                                                {exhibition.title}
+                                            </h3>
+                                            <p className="text-gray-600 text-sm pt-2">
+                                                開催期間：{exhibition.start_date} - {exhibition.end_date}
+                                            </p>
+                                            <p className="text-gray-600 text-sm">
+                                                会場：{exhibition.venue.name}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-600 text-sm line-clamp-3">
+                                        {exhibition.description}
+                                    </p>
+                                    <div className="text-right">
+                                        <Link
+                                            href={`/exhibitor/exhibitions/${exhibition.id}`}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 inline-block"
+                                        >
+                                            詳細を見る
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
-
-                        {/* 他のカードをここに追加 */}
-                    </div>
+                    )}
                 </section>
             </main>
         </div>

@@ -3,6 +3,7 @@
 import React from "react";
 import Sidebar from "@/app/components/layout/Sidebar";
 import ProductDetails from "@/app/components/ui/ProductDetail";
+import Header from "@/app/components/layout/Header";
 import { useSearchParams } from "next/navigation";
 
 const productMock = {
@@ -22,17 +23,7 @@ export default function CommodityPage() {
     return (
         <div className="min-h-screen flex flex-col">
             {/* ヘッダー */}
-            <header className="w-full py-4 bg-white shadow-md fixed top-0 left-0 z-10">
-                <div className="container mx-auto flex justify-between items-center px-4">
-                    <h1 className="text-2xl font-bold text-gray-800">AI・人工知能EXPO【秋】</h1>
-                    <div className="flex items-center space-x-4">
-                        <span className="text-gray-600">SJP株式会社</span>
-                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span className="text-gray-800">👤</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
+            <Header />
 
             {/* コンテンツ */}
             <div className="flex flex-1">

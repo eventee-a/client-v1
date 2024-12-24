@@ -1,30 +1,55 @@
 "use client";
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import axios from 'axios';
 
 // 登録内容確認画面
 export default function ConfirmPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const params = useParams();
 
-    // ダミーデータ（実際にはフォームデータを渡すことを想定）
     const formData = {
-        email: "expo@sharky.jp",
-        password: "********",
-        companyName: "SJP株式会社",
-        companyNameKana: "エスジェーピーカブシキガイシャ",
-        phoneNumber: "080-1234-5678",
-        postalCode: "541-0059",
-        prefecture: "大阪府",
-        city: "大阪市中央区",
-        address: "博労町4-6-17",
-        building: "第三丸光ビル207",
+        email: searchParams.get("email") || "",
+        password: "********", // パスワードは非表示
+        companyName: searchParams.get("companyName") || "",
+        companyNameKana: searchParams.get("companyNameKana") || "",
+        role: searchParams.get("role") || "",
+        phoneNumber: searchParams.get("phoneNumber") || "",
+        postalCode: searchParams.get("postalCode") || "",
+        prefecture: searchParams.get("prefecture") || "",
+        city: searchParams.get("city") || "",
+        address: searchParams.get("address") || "",
+        building: searchParams.get("building") || "",
     };
+    console.log(formData);
 
-    const handleSubmit = () => {
-        // 確定処理（API呼び出しなど）
-        console.log("登録内容確定", formData);
-        router.push("/exhibitor/register/success"); // 確定後の画面に遷移
+    const handleSubmit = async () => {
+        try {
+            const token = params.token;
+            // Laravel側に登録リクエストを送信
+            const response = await axios.post("http://localhost:3100/api/exhibitor/register", {
+                token: token,
+                email: searchParams.get("email"),
+                password: searchParams.get("password"),
+                password_confirmation: searchParams.get("passwordConfirm"),
+                company_name: searchParams.get("companyName"),
+                company_name_kana: searchParams.get("companyNameKana"),
+                role: searchParams.get("role"),
+                phone_number: searchParams.get("phoneNumber"),
+                postal_code: searchParams.get("postalCode"),
+                prefecture: searchParams.get("prefecture"),
+                city: searchParams.get("city"),
+                address: searchParams.get("address"),
+                building: searchParams.get("building"),
+            });
+
+            console.log(response.data);
+            router.push("/exhibitor/exhibitions"); // 登録成功画面へ遷移
+        } catch (error) {
+            console.error("登録に失敗しました。", error);
+        }
     };
 
     return (

@@ -1,14 +1,38 @@
 "use client";
-import React, { useState } from 'react';
+import axios from "axios";
+import React, { useState } from "react";
 
 // 仮登録メール送信画面
 export default function ExhibitorTemporaryRegisterPage() {
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsSubmitted(true);
+        setError("");
+
+        try {
+            const response = await axios.post(
+                "http://localhost:3100/api/exhibitor/register/temporary",
+                { email }, // リクエストボディ
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    withCredentials: true, // CORS 対応
+                }
+            );
+            console.log(response);
+
+            if (response.status !== 200) {
+                throw new Error(response.data.message || "登録に失敗しました。");
+            }
+
+            setIsSubmitted(true);
+        } catch (err: any) {
+            setError(err.message || "登録中にエラーが発生しました。");
+        }
     };
 
     return (
@@ -22,7 +46,9 @@ export default function ExhibitorTemporaryRegisterPage() {
             <main className="flex-1 flex flex-col justify-center items-center px-4 text-center">
                 {isSubmitted ? (
                     <div>
-                        <h2 className="text-3xl font-bold text-gray-800 mb-4">仮登録が完了しました</h2>
+                        <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                            仮登録が完了しました
+                        </h2>
                         <p className="text-gray-600 mb-8 max-w-lg">
                             入力いただいたメールアドレスに仮登録用のメールを送信しました。メールをご確認の上、本登録を完了してください。
                         </p>
@@ -41,6 +67,9 @@ export default function ExhibitorTemporaryRegisterPage() {
                             required
                             className="w-full px-4 py-2 mb-4 border rounded-md focus:outline-none text-black focus:ring-2 focus:ring-blue-600"
                         />
+                        {error && (
+                            <p className="text-red-600 text-sm mb-4">{error}</p>
+                        )}
                         <button
                             type="submit"
                             className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"

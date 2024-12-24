@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import axios from 'axios';
+import { useParams, useRouter } from "next/navigation";
+import React, { useState, useRef, useEffect } from 'react';
 
 // 新規会員登録画面
 export default function ExhibitorRegisterPage() {
@@ -11,6 +13,7 @@ export default function ExhibitorRegisterPage() {
         passwordConfirm: '',
         companyName: '',
         companyNameKana: '',
+        role: '',
         phoneNumber: '',
         postalCode: '',
         prefecture: '',
@@ -20,8 +23,30 @@ export default function ExhibitorRegisterPage() {
         agreeToTerms: false,
     });
 
+    const [isTokenValid, setIsTokenValid] = useState(false);
+    const [error, setError] = useState("");
     const termsRef = useRef<HTMLTextAreaElement>(null);
     const [canAgree, setCanAgree] = useState(false);
+
+    const router = useRouter();
+    const params = useParams();
+
+    useEffect(() => {
+        const verifyToken = async () => {
+            try {
+                const response = await axios.get(
+                    `http://localhost:3100/api/exhibitor/register/${params.token}/verify`
+                );
+                setFormData((prevData) => ({ ...prevData, email: response.data.email, role: response.data.role }));
+                setIsTokenValid(true);
+            } catch (err) {
+                console.error(err);
+                setError("トークンが無効です。");
+            }
+        };
+
+        verifyToken();
+    }, [params.token]);
 
     const handleScroll = () => {
         if (termsRef.current) {
@@ -35,19 +60,36 @@ export default function ExhibitorRegisterPage() {
         const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [name]: type === 'checkbox' ? checked : value,
+            [name]: type === "checkbox" ? checked : value,
         });
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Handle form submission logic here
-        console.log(formData);
+        const queryData = { ...formData, agreeToTerms: formData.agreeToTerms ? "true" : "false" };
+        const queryString = new URLSearchParams(queryData as Record<string, string>).toString();
+        router.push(`/exhibitor/register/${params.token}/confirm?${queryString}`);
     };
+
+    if (!isTokenValid) {
+        return (
+            <div className="min-h-screen flex justify-center items-center">
+                <p className="text-red-500">{error || "トークンを検証しています..."}</p>
+            </div>
+        );
+    }
+
+    if (!isTokenValid) {
+        return (
+            <div className="min-h-screen flex justify-center items-center">
+                <p className="text-red-500">{error || "トークンを検証しています..."}</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center">
-            <header className="w-full py-6 bg-white shadow-md">
+            <header className="w-full py-6 bg-white shadow-md z-10">
                 <div className="container mx-auto px-4">
                     <h1 className="text-2xl font-bold text-gray-800">新規会員登録</h1>
                 </div>
@@ -66,7 +108,7 @@ export default function ExhibitorRegisterPage() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     placeholder="例) xxxx@xxx.xx.jp"
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
@@ -78,7 +120,7 @@ export default function ExhibitorRegisterPage() {
                                     value={formData.emailConfirm}
                                     onChange={handleChange}
                                     placeholder="例) xxxx@xxx.xx.jp"
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
@@ -89,7 +131,7 @@ export default function ExhibitorRegisterPage() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
@@ -100,7 +142,7 @@ export default function ExhibitorRegisterPage() {
                                     name="passwordConfirm"
                                     value={formData.passwordConfirm}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
                                 />
                             </div>
@@ -117,7 +159,7 @@ export default function ExhibitorRegisterPage() {
                                     name="companyName"
                                     value={formData.companyName}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -127,7 +169,7 @@ export default function ExhibitorRegisterPage() {
                                     name="companyNameKana"
                                     value={formData.companyNameKana}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -137,7 +179,7 @@ export default function ExhibitorRegisterPage() {
                                     name="phoneNumber"
                                     value={formData.phoneNumber}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -147,7 +189,7 @@ export default function ExhibitorRegisterPage() {
                                     name="postalCode"
                                     value={formData.postalCode}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -157,7 +199,7 @@ export default function ExhibitorRegisterPage() {
                                     name="prefecture"
                                     value={formData.prefecture}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full text-black px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -167,7 +209,7 @@ export default function ExhibitorRegisterPage() {
                                     name="city"
                                     value={formData.city}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -177,7 +219,7 @@ export default function ExhibitorRegisterPage() {
                                     name="address"
                                     value={formData.address}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -187,7 +229,7 @@ export default function ExhibitorRegisterPage() {
                                     name="building"
                                     value={formData.building}
                                     onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
                         </div>
