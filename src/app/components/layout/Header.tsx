@@ -2,8 +2,10 @@
 
 import React from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 
 export default function Header() {
+    const { id: exhibitionId } = useParams();
     return (
         <header className="w-full py-4 bg-white shadow-md fixed top-0 left-0 z-10">
             <div className="container mx-auto flex justify-between items-center px-4">
@@ -15,7 +17,7 @@ export default function Header() {
                     </div>
                     {/* カートアイコン */}
                     <Link
-                        href="/exhibitor/exhibitions/1/application/cart"
+                        href={`/exhibitor/exhibitions/${exhibitionId}/application/cart`} 
                         className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center hover:bg-gray-400"
                     >
                         <span className="text-gray-800">🛒</span>

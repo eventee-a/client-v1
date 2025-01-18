@@ -1,5 +1,8 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+import axios from "axios";
+import { useParams } from "next/navigation";
 import React, { useState } from "react";
 
 type Product = {
@@ -19,15 +22,49 @@ interface ProductDetailsProps {
 export default function ProductDetails({ product }: ProductDetailsProps) {
     const [selectedImage, setSelectedImage] = useState(product.images[0]);
     const [quantity, setQuantity] = useState(1); // 個数を管理する状態
+    const { id: exhibitionId } = useParams();
+    const { token } = useAuth(); // AuthContext から token を取得
 
     // 個数を増やす関数
     const incrementQuantity = () => {
         setQuantity((prev) => prev + 1);
     };
 
-    // 個数を減らす関数 (0以下にはならない)
+    // 個数を減らす関数 (1以下にはならない)
     const decrementQuantity = () => {
         setQuantity((prev) => (prev > 1 ? prev - 1 : prev));
+    };
+
+    // カートに追加する関数
+    const addToCart = async () => {
+        try {
+            if (!token) {
+                alert("ログインが必要です。");
+                return;
+            }
+
+            const response = await axios.post(
+                `http://localhost:3100/api/exhibitor/exhibitions/${exhibitionId}/cart`,
+                {
+                    product_id: product.id,
+                    quantity: quantity,
+                    price: parseFloat(product.price.replace(/[^0-9.-]+/g, "")), // 数字のみ抽出
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`, // トークンをヘッダーに追加
+                    },
+                }
+            );
+
+            if (response.status === 200) {
+                alert("カートに商品を追加しました。");
+            }
+        } catch (error) {
+            console.error("カートへの追加中にエラーが発生しました:", error);
+            alert("カートへの追加中にエラーが発生しました。");
+        }
     };
 
     return (
@@ -53,9 +90,8 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                                 src={image}
                                 alt={`サムネイル${index}`}
                                 onClick={() => setSelectedImage(image)}
-                                className={`w-20 h-20 cursor-pointer border ${
-                                    image === selectedImage ? "border-blue-500" : "border-gray-300"
-                                } rounded-lg`}
+                                className={`w-20 h-20 cursor-pointer border ${image === selectedImage ? "border-blue-500" : "border-gray-300"
+                                    } rounded-lg`}
                             />
                         ))}
                     </div>
@@ -88,7 +124,10 @@ export default function ProductDetails({ product }: ProductDetailsProps) {
                         >
                             －
                         </button>
-                        <button className="px-6 py-2 bg-gray-300 text-black font-bold rounded hover:bg-gray-400">
+                        <button
+                            onClick={addToCart}
+                            className="px-6 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700"
+                        >
                             カートに追加
                         </button>
                     </div>

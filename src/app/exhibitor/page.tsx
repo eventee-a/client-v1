@@ -25,7 +25,10 @@ export default function ExhibitorTopPage() {
                     >
                         新規登録
                     </button>
-                    <button className="px-6 py-2 bg-gray-200 text-gray-800 outline rounded-md hover:bg-gray-300">
+                    <button
+                        className="px-6 py-2 bg-gray-200 text-gray-800 outline rounded-md hover:bg-gray-300"
+                        onClick={() => router.push('/exhibitor/login')}
+                    >
                         ログイン
                     </button>
                 </div>
